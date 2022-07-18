@@ -1,0 +1,7 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:13370/demo
+    username: user
+    password: password
+  liquibase:
+    enabled: true

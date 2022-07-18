@@ -1,0 +1,88 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0.0.1
+      author: Izzy
+      changes:
+        - createTable:
+            tableName: player
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  incrementBy: 1
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: external_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: age
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: date_of_birth
+                  type: date
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: player
+            columnNames: external_id
+            constraintName: uq_player_external_id
+            forIndexCatalogName: idx_player_external_id
+            validate: true
+
+        - createTable:
+            tableName: pokemon
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  incrementBy: 1
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: external_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: owner_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: power
+                  type: decimal(19, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: stamina
+                  type: decimal(19, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: health
+                  type: decimal(19, 2)
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            referencedTableName: player
+            referencedColumnNames: id
+            baseColumnNames: owner_id
+            baseTableName: pokemon
+            constraintName: fk_pokemon_player
+            onDelete: CASCADE
+            validate: true
+        - addUniqueConstraint:
+            tableName: pokemon
+            columnNames: external_id
+            constraintName: uq_pokemon_external_id
+            forIndexCatalogName: idx_pokemon_external_id
+            validate: true
