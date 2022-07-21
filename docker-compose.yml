@@ -3,17 +3,80 @@ version: '3.9'
 volumes:
   postgres_data:
     driver: local
+networks:
+  pokemon-manager-net:
+    driver: bridge
+    name: pokemon-manager-net
 
 services:
+  app:
+    container_name: pokemon-manager-app
+    image: ptar/pokemon-manager-app:latest
+    networks:
+      - pokemon-manager-net
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        JAR_FILE: target/pokemon-manager.jar
+    environment:
+      SERVER_PORT: "8080"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+      DB_NAME: "pokemon_manager"
+      DB_USERNAME: "xed"
+      DB_PASSWORD: "xed"
+      KEYCLOAK_HOST: "keycloak"
+      KEYCLOAK_PORT: "45678"
+      KEYCLOAK_REALM: "pokemon"
+      KEYCLOAK_CLIENT_ID: "pokemon-client"
+      KEYCLOAK_CLIENT_SECRET: "gUYaQZXdDOoT2bxM4WkQJ4hr8kPacMvo"
+    ports:
+      - "13372:8080"
+    depends_on:
+      - postgres
+      - keycloak
+
+
   postgres:
-    container_name: postgres
+    container_name: pokemon-manager-db
     image: postgres:12.4-alpine
     restart: unless-stopped
+    networks:
+      - pokemon-manager-net
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "13370:5432"
     environment:
-      POSTGRES_DB: demo
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak-user
+      POSTGRES_PASSWORD: Pa55w0rD-K3ycl0aK
+
+
+  keycloak:
+    container_name: pokemon-manager-auth
+    image: jboss/keycloak:latest
+    restart: unless-stopped
+    command: ["-Djboss.http.port=45678"]
+    networks:
+      - pokemon-manager-net
+    environment:
+      DB_VENDOR: POSTGRES
+      DB_ADDR: pokemon-manager-db
+      DB_DATABASE: keycloak
+      DB_SCHEMA: public
+      DB_USER: keycloak-user
+      DB_PASSWORD: Pa55w0rD-K3ycl0aK
+      KEYCLOAK_USER: xed
+      KEYCLOAK_PASSWORD: xed
+      KEYCLOAK_IMPORT: /import/pokemon-realm.json
+      KEYCLOAK_LOGLEVEL: INFO
+      KEYCLOAK_FRONTEND_URL: http://localhost:13371
+    volumes:
+      - ./keycloak/realms/pokemon-realm.json:/import/pokemon-realm.json
+    ports:
+      - "13371:45678"
+    depends_on:
+      - postgres
